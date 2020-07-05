@@ -73,9 +73,9 @@ jobs:
       - run: make -C ./gettext-${gettext_version}
       - run: make -C ./gettext-${gettext_version} install
       - run: rm -rf "${prefix}/share/gettext/share/doc"
-      - run: tar cfJv ./gettext-${gettext_version}-${macos_version}.tar.xz ./gettext-${gettext_version}
+      - run: tar cfJv ./gettext-${gettext_version}-macos-${macos_version}.tar.xz ./gettext-${gettext_version}
       - id: gettext
-        run: echo "::set-output name=archive::$(ls -1 ./gettext-*-*.tar.xz)"
+        run: echo "::set-output name=archive::$(ls -1 gettext-*-macos-*.tar.xz)"
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.gettext.outputs.archive }}
