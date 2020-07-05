@@ -1,0 +1,81 @@
+name: build
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    name: build Vim
+    runs-on: macOS-latest
+    env:
+      configurations: >
+        --enable-fail-if-missing
+        --disable-smack
+        --disable-selinux
+        --disable-xsmp
+        --disable-xsmp-interact
+        --enable-luainterp=dynamic
+        --enable-pythoninterp=dynamic
+        --enable-python3interp=dynamic
+        --enable-cscope
+        --disable-netbeans
+        --enable-terminal
+        --enable-multibyte
+        --disable-rightleft
+        --disable-arabic
+        --enable-gui=no
+        --with-compiledby=sasa+1
+        --with-features=huge
+        --with-luajit
+        --without-x
+        --with-tlib=ncurses
+      datadir: /usr/share
+      gettext_version: 0.20.2
+      prefix: /var/tmp/vim
+    steps:
+      - uses: actions/checkout@v2
+      - id: macos
+        run: echo "::set-output name=version::$(sw_vers -productVersion)"
+      - run: echo "::set-env name=macos_version::$(sw_vers -productVersion)"
+      - run: echo "::set-env name=MAKEFLAGS::-j $(getconf _NPROCESSORS_ONLN)"
+      - run: >
+          git config --global user.name sasaplus1 &&
+          git config --global user.email '<>'
+      - run: brew update
+      - run: brew install autoconf coreutils gnu-sed lua@5.1 luajit python
+      # NOTE: build gettext
+      - run: curl -fsSLO https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.xz
+      - run: tar fvx ./gettext-${gettext_version}.tar.xz
+      - run: rm -f ./gettext-${gettext_version}.tar.xz
+      - run: >
+          cd ./gettext-${gettext_version} &&
+          ./configure
+          --prefix=${prefix}/share/gettext
+          --disable-c++
+          --disable-csharp
+          --disable-debug
+          --disable-dependency-tracking
+          --disable-java
+          --disable-silent-rules
+          --enable-relocatable
+          gl_cv_func_ftello_works=yes
+          --with-included-gettext
+          --with-included-glib
+          --with-included-libcroco
+          --with-included-libunistring
+          --without-bzip2
+          --without-cvs
+          --without-emacs
+          --without-git
+          --without-xz
+      - run: make -C ./gettext-${gettext_version}
+      - run: make -C ./gettext-${gettext_version} install
+      - run: rm -rf "${prefix}/share/gettext/share/doc"
+      - run: tar cfJv ./gettext-${gettext_version}-${macos_version}.tar.xz ./gettext-${gettext_version}
+      - id: gettext
+        run: echo "::set-output name=archive::$(ls -1 ./gettext-*-*.tar.xz)"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.gettext.outputs.archive }}
+          path: ${{ steps.gettext.outputs.archive }}
