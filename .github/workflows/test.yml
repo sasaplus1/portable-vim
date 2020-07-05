@@ -1,4 +1,4 @@
-name: build
+name: test
 
 on:
   - push
@@ -44,6 +44,7 @@ jobs:
           git config --global user.email '<>'
       - run: brew update
       - run: brew install autoconf coreutils gnu-sed lua@5.1 luajit python
+        continue-on-error: true
       # NOTE: build gettext
       - run: curl -fsSLO https://ftp.gnu.org/pub/gnu/gettext/gettext-${gettext_version}.tar.xz
       - run: tar fvx ./gettext-${gettext_version}.tar.xz
