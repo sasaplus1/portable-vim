@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable portable-vim
+      - run: docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable portable-vim
   gettext:
     name: build gettext
     runs-on: macOS-latest
