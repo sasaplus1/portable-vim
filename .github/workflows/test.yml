@@ -113,7 +113,7 @@ jobs:
       - run: >
           git clone --depth 1 https://github.com/koron/guilt.git &&
           git clone --depth 1 https://github.com/koron/vim-kaoriya.git
-      - run: git submodule update --depth 1 --init --recommend-shallow --recursive -- ./patches ./vim
+      - run: git submodule update --depth 1 --init --recommend-shallow --recursive -- ./contrib/vimdoc-ja ./patches ./vim
         working-directory: vim-kaoriya
       - run: echo "::set-env name=vim_version::$(printf -- '%b' 'all:\n\t@printf -- $(VIM_VER)' | make -f ./VERSION -f -)"
         working-directory: vim-kaoriya
