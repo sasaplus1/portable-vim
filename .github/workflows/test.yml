@@ -91,11 +91,10 @@ jobs:
         --without-x
         --with-tlib=ncurses
       datadir: /usr/share
-      gettext: ${{ env.prefix }}/share/gettext
       prefix: /var/tmp/vim
-      sharedir: ${{ env.prefix }}/share
     steps:
-      - run: echo "::set-env name=gettext_prefix::${prefix}/share/gettext"
+      - run: echo "::set-env name=sharedir::${prefix}/share"
+      - run: echo "::set-env name=gettext::${sharedir}/gettext"
       - run: echo "::set-env name=macos_version::$(sw_vers -productVersion)"
       - run: echo "::set-env name=MAKEFLAGS::-j $(getconf _NPROCESSORS_ONLN)"
       - run: >
