@@ -1,0 +1,90 @@
+#!/bin/bash
+
+set -euo pipefail
+
+__main() {
+  local readlink=
+
+  if readlink -f . >/dev/null 2>&1
+  then
+    readlink=$(type -p readlink)
+  elif greadlink -f . >/dev/null 2>&1
+  then
+    readlink=$(type -p greadlink)
+  fi
+
+  local vim=
+
+  if [ -n "$readlink" ]
+  then
+    vim="$(dirname "$($readlink -f "$0")")/vim"
+  else
+    if [ -L "$0" ]
+    then
+      local current_dir=
+
+      current_dir=$(pwd -P)
+
+      local target_dir="$0"
+
+      cd "$(dirname "$target_dir")"
+
+      while [ -L "$target_dir" ]
+      do
+        target_dir=$(readlink "$target_dir")
+        cd "$(dirname "$target_dir")"
+        target_dir=$(basename "$target_dir")
+      done
+
+      vim="$(pwd -P)/vim"
+
+      cd "$current_dir"
+    else
+      vim="$(cd "$(dirname "$0")" && pwd)/vim"
+    fi
+  fi
+
+  if [ ! -x "$vim" ]
+  then
+    printf -- '%s\n' 'cannot execute vim.' >&2
+    exit 1
+  fi
+
+  local name=
+
+  name="$(basename "$0")"
+
+  local options=
+
+  case $name in
+    r*)
+      options="${options:--}Z"
+      ;;
+  esac
+
+  case $name in
+    *vimdiff)
+      options="${options:--}d"
+      ;;
+    *view)
+      options="${options:--}R"
+      ;;
+    *ex)
+      options="${options:--}e"
+      ;;
+  esac
+
+  local fallback=
+
+  fallback="$(dirname "$(dirname "$vim")")/share/vim"
+
+  if [ -z "$options" ]
+  then
+    VIM="$fallback" exec "$vim" "$@"
+  else
+    VIM="$fallback" exec "$vim" "$options" "$@"
+  fi
+}
+__main "$@"
+
+unset -f __main
