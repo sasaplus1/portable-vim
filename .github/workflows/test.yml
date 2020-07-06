@@ -19,6 +19,7 @@ jobs:
       vim_prefix: /var/tmp/vim
     steps:
       - run: echo "::set-env name=macos_version::$(sw_vers -productVersion)"
+      - run: echo "::set-env name=MAKEFLAGS::-j $(getconf _NPROCESSORS_ONLN)"
       - id: gettext
         run: echo "::set-output name=archive::gettext-macos-${macos_version}.tar.xz"
       - uses: actions/checkout@v2
