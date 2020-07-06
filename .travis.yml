@@ -1,0 +1,67 @@
+os: osx
+
+language: c
+
+compiler: clang
+
+git:
+  depth: 1
+
+jobs:
+  include:
+    - osx_image: xcode12
+    - osx_image: xcode11.3
+
+env:
+  global:
+    # commons
+    - MAKEFLAGS="-j $(getconf _NPROCESSORS_ONLN)"
+    - macos_version=$(sw_vers -productVersion)
+    # gettext
+    - archive=gettext-macos-$(sw_vers -productVersion).tar.xz
+    - gettext_version=0.20.2
+    - vim_prefix=/var/tmp/vim
+    # vim
+    - datadir=/usr/share
+    - prefix=/var/tmp/vim
+    - sharedir=${prefix}/share
+    - gettext=${sharedir}/gettext
+
+addons:
+  homebrew:
+    packages:
+      - autoconf
+      - coreutils
+      - gnu-sed
+      - lua@5.1
+      - luajit
+      - python
+    update: true
+
+before_script:
+  - export options=()
+  - options+=(--enable-fail-if-missing)
+  - options+=(--disable-smack)
+  - options+=(--disable-selinux)
+  - options+=(--disable-xsmp)
+  - options+=(--disable-xsmp-interact)
+  - options+=(--enable-luainterp=dynamic)
+  - options+=(--enable-pythoninterp=dynamic)
+  - options+=(--enable-python3interp=dynamic)
+  - options+=(--enable-cscope)
+  - options+=(--disable-netbeans)
+  - options+=(--enable-terminal)
+  - options+=(--enable-multibyte)
+  - options+=(--disable-rightleft)
+  - options+=(--disable-arabic)
+  - options+=(--enable-gui=no)
+  - options+=(--with-compiledby=sasa+1)
+  - options+=(--with-features=huge)
+  - options+=(--with-luajit)
+  - options+=(--without-x)
+  - options+=(--with-tlib=ncurses)
+  - export configurations=${options[@]}
+
+script:
+  - ./.travis-build-gettext.sh
+  - ./.travis-build-vim.sh
