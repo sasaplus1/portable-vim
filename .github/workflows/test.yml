@@ -146,6 +146,14 @@ jobs:
       - run: gsed -i.bak -r -e "s|\<root\>|$(whoami)|g" ./vim-kaoriya/build/freebsd/Makefile
       - run: make -C ./vim-kaoriya/build/freebsd VIM_DIR="${sharedir}/vim" kaoriya-install
       - run: cp -rf vim-kaoriya/contrib/vimdoc-ja "${sharedir}/vim/plugins"
+      - run: cp ./portable-vim "${prefix}/bin"
+      - run: >
+          ln -s portable-vim pex &&
+          ln -s portable-vim pview &&
+          ln -s portable-vim pvimdiff &&
+          ln -s portable-vim rpview &&
+          ln -s portable-vim rpvim
+        working-directory: ${{ env.prefix }}/bin
       - run: >
           install_name_tool
           -change
