@@ -12,10 +12,10 @@ jobs:
       gettext_version: 0.20.2
       vim_prefix: /var/tmp/vim
     steps:
-      - uses: actions/checkout@v2
       - run: echo "::set-env name=macos_version::$(sw_vers -productVersion)"
       - id: gettext
         run: echo "::set-output name=archive::gettext-macos-${macos_version}.tar.xz"
+      - uses: actions/checkout@v2
       - id: cache-gettext
         uses: actions/cache@v2
         with:
@@ -91,19 +91,72 @@ jobs:
         --without-x
         --with-tlib=ncurses
       datadir: /usr/share
-      gettext_version: 0.20.2
+      gettext: ${{ env.prefix }}/share/gettext
       prefix: /var/tmp/vim
+      sharedir: ${{ env.prefix }}/share
     steps:
-      - uses: actions/checkout@v2
+      - run: echo "::set-env name=gettext_prefix::${prefix}/share/gettext"
       - run: echo "::set-env name=macos_version::$(sw_vers -productVersion)"
       - run: echo "::set-env name=MAKEFLAGS::-j $(getconf _NPROCESSORS_ONLN)"
-      - uses: actions/download-artifact@v2
-        with:
-          name: gettext-macos-${{ env.macos_version }}.tar.xz
       - run: >
           git config --global user.name sasaplus1 &&
           git config --global user.email '<>'
+      - uses: actions/checkout@v2
       - run: brew update
       - run: brew install autoconf coreutils gnu-sed lua@5.1 luajit python
         continue-on-error: true
-      - run: tar xvf gettext-macos-${macos_version}.tar.xz
+      - run: >
+          git clone --depth 1 https://github.com/koron/guilt.git &&
+          git clone --depth 1 https://github.com/koron/vim-kaoriya.git
+      - run: git submodule update --depth 1 --init --recommend-shallow --recursive -- ./patches ./vim
+        working-directory: vim-kaoriya
+      - run: echo "::set-env name=vim_version::$(printf -- '%b' 'all:\n\t@printf -- $(VIM_VER)' | make -f ./VERSION -f -)"
+        working-directory: vim-kaoriya
+      - run: gsed -i.bak -r -e 's|\<readlink\>|greadlink|g' ./guilt/guilt
+      - run: make -C ./guilt PREFIX=/usr/local install
+      - run: >
+          git checkout -b v${vim_version} &&
+          git config --local guilt.patchesdir ../patches &&
+          guilt init
+        working-directory: vim-kaoriya/vim
+      - run: cp ./patches/master/* "./patches/v${vim_version}"
+        working-directory: vim-kaoriya
+      - run: guilt push --all
+        working-directory: vim-kaoriya/vim/src
+      - run: mkdir -p "${sharedir}"
+      - uses: actions/download-artifact@v2
+        with:
+          name: gettext-macos-${{ env.macos_version }}.tar.xz
+      - run: tar xvf gettext-macos-${macos_version}.tar.xz -C "${sharedir}"
+      - run: echo "::add-path::${gettext}/bin"
+      - run: make -C ./vim-kaoriya/vim/src autoconf
+      - run: >
+          export LUA_PREFIX="$(brew --prefix)" &&
+          export CFLAGS="-I${gettext}/include" &&
+          export LDFLAGS="-L${gettext}/lib" &&
+          eval "./configure --prefix=${prefix} ${configurations}" &&
+          make DATADIR=${datadir} &&
+          make install
+        working-directory: vim-kaoriya/vim
+      - run: gsed -i.bak -r -e "s|\<root\>|$(whoami)|g" ./vim-kaoriya/build/freebsd/Makefile
+      - run: make -C ./vim-kaoriya/build/freebsd VIM_DIR="${sharedir}/vim" kaoriya-install
+      - run: cp -rf vim-kaoriya/contrib/vimdoc-ja "${sharedir}/vim/plugins"
+      - run: >
+          install_name_tool
+          -change
+          "$(otool -L ${prefix}/bin/vim | awk '/libintl/ { print $1 }')"
+          '@executable_path/../share/gettext/lib/libintl.dylib'
+          "${prefix}/bin/vim"
+      - run: otool -L "${prefix}/bin/vim"
+      - run: >
+          "${prefix}/bin/vim" --version
+      - run: tar cfJv "vim-${vim_version}-macos-${macos_version}.tar.xz" -C "${prefix}/.." vim
+      - run: shasum -a 256 -b "vim-${vim_version}-macos-${macos_version}.tar.xz" | tee sha256sum.txt
+      - uses: actions/upload-artifact@v2
+        with:
+          name: vim-${{ env.vim_version }}-macos-${{ env.macos_version }}.tar.xz
+          path: vim-${{ env.vim_version }}-macos-${{ env.macos_version }}.tar.xz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sha256sum.txt
+          path: sha256sum.txt
