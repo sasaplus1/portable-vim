@@ -50,7 +50,6 @@ jobs:
       - run: tar fvx ./gettext-${gettext_version}.tar.xz
       - run: rm -f ./gettext-${gettext_version}.tar.xz
       - run: >
-          cd ./gettext-${gettext_version} &&
           ./configure
           --prefix=${prefix}/share/gettext
           --disable-c++
@@ -70,6 +69,7 @@ jobs:
           --without-emacs
           --without-git
           --without-xz
+        working-directory: gettext-${{ env.gettext_version }}
       - run: make -C ./gettext-${gettext_version}
       - run: make -C ./gettext-${gettext_version} install
       - run: rm -rf "${prefix}/share/gettext/share/doc"
