@@ -1,8 +1,11 @@
 name: build
 
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+  schedule:
+    # NOTE: at 8:30 am every Monday by JST
+    - cron: '30 23 * * 1'
 
 jobs:
   gettext:
@@ -168,3 +171,29 @@ jobs:
         with:
           name: sha256sum.txt
           path: sha256sum.txt
+      - id: create_release
+        uses: actions/create-release@v1.1.0
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+      - uses: actions/upload-release-asset@v1.0.2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: vim-${{ env.vim_version }}-macos-${{ env.macos_version }}.tar.xz
+          asset_name: vim-${{ env.vim_version }}-macos-${{ env.macos_version }}.tar.xz
+          asset_content_type: application/x-xz
+      - uses: actions/upload-release-asset@v1.0.2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: sha256sum.txt
+          asset_name: sha256sum.txt
+          asset_content_type: text/plain
