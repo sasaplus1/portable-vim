@@ -1,5 +1,6 @@
 # portable-vim
 
+[![build](https://github.com/sasaplus1/portable-vim/workflows/build/badge.svg)](https://github.com/sasaplus1/portable-vim/actions?query=workflow%3Abuild)
 [![test](https://github.com/sasaplus1/portable-vim/workflows/test/badge.svg)](https://github.com/sasaplus1/portable-vim/actions?query=workflow%3Atest)
 
 my KaoriYa Vim for macOS
