@@ -31,7 +31,7 @@ __main() {
 
       while [ -L "$target_dir" ]
       do
-        target_dir=$(readlink "$target_dir")
+        target_dir=$($readlink "$target_dir")
         cd "$(dirname "$target_dir")"
         target_dir=$(basename "$target_dir")
       done
